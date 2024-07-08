@@ -1,7 +1,6 @@
 import icons from '../../img/icons.svg';
 import view from './view';
 import { Fraction } from 'fractional';
-// console.log(Fraction);
 
 class RecipeView extends view {
   _parentElement = document.querySelector('.recipe');
@@ -9,12 +8,11 @@ class RecipeView extends view {
   _successMessage = '';
 
   // MVC PUBLISHER-SUBCRIBER PATTERN
-  AddHandlerRender(habdler) {
-    ['hashchange', 'load'].forEach(ev => window.addEventListener(ev, habdler));
+  AddHandlerRender(handler) {
+    ['hashchange', 'load'].forEach(ev => window.addEventListener(ev, handler));
   }
 
   _generateMarkup() {
-    console.log(this._data);
     return `
         <figure class="recipe__fig">
           <img src="${this._data.image}" alt="${

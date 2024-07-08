@@ -2,14 +2,13 @@ import icons from '../../img/icons.svg';
 
 export default class view {
   _data;
-
+  _curPage;
   render(data) {
     this._data = data;
-
+    this._curPage = this._data.page;
     if (!data || (Array.isArray(data) && data.length === 0))
       return this.renderError();
 
-    console.log(data);
     const markUp = this._generateMarkup();
 
     this._clearInput();
