@@ -6,6 +6,7 @@ class RecipeView extends view {
   _parentElement = document.querySelector('.recipe');
   _errorMessage = 'could not find recipe, pls try again !!';
   _successMessage = '';
+  // _active = this._data.bookmarked ? '-fill' : '';
 
   // MVC PUBLISHER-SUBCRIBER PATTERN
   AddHandlerRender(handler) {
@@ -20,8 +21,18 @@ class RecipeView extends view {
       if (+updateTo > 0) return handler(+updateTo);
     });
   }
+  addhandlerAddBookmark(handler) {
+    this._parentElement.addEventListener('click', function (e) {
+      const btn = e.target.closest('.btn-bookmark');
+      if (!btn) return;
+      console.log(btn);
+      handler();
+    });
+  }
 
   _generateMarkup() {
+    const fill = this._data.bookmarked ? '-fill' : '';
+
     return `
         <figure class="recipe__fig">
           <img src="${this._data.image}" alt="${
@@ -72,9 +83,9 @@ class RecipeView extends view {
           <div class="recipe__user-generated">
         
           </div>
-          <button class="btn--round">
+          <button class="btn--round btn-bookmark">
             <svg class="">
-              <use href="${icons}#icon-bookmark-fill"></use>
+              <use href="${icons}#icon-bookmark${fill}"></use>
             </svg>
           </button>
         </div>
@@ -82,11 +93,9 @@ class RecipeView extends view {
         <div class="recipe__ingredients">
           <h2 class="heading--2">Recipe ingredients</h2>
           <ul class="recipe__ingredient-list">
-          ${this._data.ingredients.map(this._generateMarkupIngredient).join('')}
-            
-
-          
-        </div>
+          ${this._data.ingredients
+            .map(this.generateMarkupIngredient)
+            .join('')}</div>
 
         <div class="recipe__directions">
           <h2 class="heading--2">How to cook it</h2>
@@ -111,7 +120,7 @@ class RecipeView extends view {
           </div>`;
   }
 
-  _generateMarkupIngredient(ing) {
+  generateMarkupIngredient(ing) {
     return ` 
         
       <li class="recipe__ingredient">

@@ -4,7 +4,8 @@ export default class view {
   _data;
   _curPage;
   _numPages;
-  render(data) {
+
+  render(data, render = true) {
     this._data = data;
     this._curPage = this._data.page;
     if (!data || (Array.isArray(data) && data.length === 0))
@@ -12,6 +13,7 @@ export default class view {
 
     const markUp = this._generateMarkup();
 
+    if (!render) return markUp;
     this._clearInput();
     this._parentElement.insertAdjacentHTML('afterbegin', markUp);
   }
@@ -21,27 +23,19 @@ export default class view {
     const newMarkup = this._generateMarkup();
     /*
     So here we now have the Markup
-    3:26
     but that is just a string. And so that is gonna be very difficult to compare
-    3:31
     to the DOM elements that we currently have on the page. And so to fix that problem,
-    3:37
     we can actually use a nice trick, which is to basically convert this Markup string
-    3:43
     to a DOM object that's living in the memory and that we can then use
 
-    4:39
+
     So basically, newDOM here will become like a big object, which is like a virtual DOM.
-    4:46
     So a DOM that is not really living on the page but which lives in our memory.
     */
     // const newDom = document.createRange().createContextualFragment(newMarkUp);
     /*
-    5:05
     And then we can take that newDOM, and then on that, we can call querySelectorAll,
-    5:14
     and select all the elements in there. And so if we now log this to the console,
-    5:21
     then we will basically see all the elements that will be contained inside of this newDOM element
 */
     // const newElements = Array.from(newDom.querySelectorAll('*'));
