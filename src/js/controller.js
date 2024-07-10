@@ -2,16 +2,15 @@ import * as model from './model.js';
 
 import RecipeView from './view/viewRecipe.js';
 import SearchView from './view/searchView.js';
-import view from './view/view.js';
+
 import resultView from './view/resultView.js';
 import PaginationView from './view/paginationView.js';
 
 //
 
-import 'core-js/stable';
 import 'regenerator-runtime';
+import 'core-js/stable';
 import paginationView from './view/paginationView.js';
-// import paginationView from './view/paginationView.js';
 
 // import resultView from './view/resultView.js';
 
@@ -27,6 +26,9 @@ const controlRecipes = async function () {
 
     if (!id) return;
     RecipeView.spinnerRender();
+
+    // 0) update results view to mark selected search view
+    resultView.update(model.getSearchResultPage(1));
 
     // 1- loading recipe / returns a promise so we have to await it
     await model.loadRecipe(id);
@@ -70,10 +72,20 @@ const controlPagination = function (goToPage) {
   PaginationView.render(model.state.search);
 };
 
+const controlServing = function (newServings) {
+  // update recipe serbings in (the state)
+  model.updateServings(newServings);
+
+  // update the recipe view
+  // RecipeView.render(model.state.recipe);
+  RecipeView.update(model.state.recipe);
+};
+
 const init = function () {
   RecipeView.AddHandlerRender(controlRecipes);
+  RecipeView.addHandlerUpdateServings(controlServing);
   SearchView.addHandlerSearch(controlSearchResults);
-  paginationView.addHandlerClick(controlPagination);
+  PaginationView.addHandlerClick(controlPagination);
 };
 init();
 
