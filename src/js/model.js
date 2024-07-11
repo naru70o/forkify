@@ -12,7 +12,7 @@ export const state = {
     servings: 0,
     resultsPerPage: RES_PER_PAGE,
   },
-  Bookmarks: [],
+  bookmarks: [],
 };
 
 export const loadRecipe = async function (id) {
@@ -35,11 +35,10 @@ export const loadRecipe = async function (id) {
     // in the bookmarks array and the state
     // to basically Mark any recipe that we load as bookmarked,
     // if it is already in the bookmarks array.
-    if (state.Bookmarks.some(bookmark => bookmark.id === id))
+    if (state.bookmarks.some(bookmark => bookmark.id === id))
       state.recipe.bookmarked = true;
     else state.recipe.bookmarked;
   } catch (err) {
-    console.error(`${err}`);
     throw err;
   }
 };
@@ -66,7 +65,7 @@ export const loadSearchResults = async function (query) {
 
 export const getSearchResultPage = function (page = state.search.page) {
   state.search.page = page;
-  console.log(page);
+
   const start = (page - 1) * state.search.resultsPerPage; //0
   const end = page * state.search.resultsPerPage; //10
 
@@ -82,18 +81,36 @@ export const updateServings = function (newServings) {
   state.recipe.servings = newServings;
 };
 
+const persistBookmarks = function () {
+  const setStorage = localStorage.setItem(
+    'bookmarks',
+    JSON.stringify(state.bookmarks)
+  );
+  console.log(setStorage);
+};
+
 export const addBookmark = function (recipe) {
-  state.Bookmarks.push(recipe);
+  state.bookmarks.push(recipe);
 
   //mark current recipe as a Bookmark
   if (recipe.id === state.recipe.id) state.recipe.bookmarked = true;
+  persistBookmarks();
 };
 
 export const deletebookmark = function (id) {
   // delete bookmark
-  const index = state.Bookmarks.findIndex(el => el.id === id);
-  state.Bookmarks.splice(index, 1);
+  const index = state.bookmarks.findIndex(el => el.id === id);
+  state.bookmarks.splice(index, 1);
 
   //mark current recipe as NOT bookmarked
   if (id === state.recipe.id) state.recipe.bookmarked = false;
+  persistBookmarks();
 };
+
+const init = function () {
+  const storage = localStorage.getItem('bookmarks');
+  console.log(storage);
+  if (storage) state.bookmarks = JSON.parse(storage);
+};
+init();
+console.log('model', state.bookmarks);
