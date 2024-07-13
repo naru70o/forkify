@@ -1,7 +1,8 @@
 import { async } from 'regenerator-runtime';
-import { API_URL, RES_PER_PAGE } from './config.js';
+import { API_URL, RES_PER_PAGE, KEY } from './config.js';
 
-import { getJSON } from './helper.js';
+// import { getJSON, sendJSON } from './helper.js';
+import { AJAX } from './helper.js';
 
 export const state = {
   recipe: {},
@@ -15,22 +16,30 @@ export const state = {
   bookmarks: [],
 };
 
+const createRecipeObject = function (data) {
+  const { recipe } = data.data;
+
+  return {
+    id: recipe.id,
+    title: recipe.title,
+    publisher: recipe.publisher,
+    sourceUrl: recipe.source_url,
+    image: recipe.image_url,
+    servings: recipe.servings,
+    coockingTime: recipe.cooking_time,
+    ingredients: recipe.ingredients,
+    // So if recipe.key is a faulty value, so if it doesn't exist
+    // well, then nothing happens here, right
+    ...(recipe.key && { key: recipe.key }),
+  };
+};
+
 export const loadRecipe = async function (id) {
   try {
     // getJSON returns a promise so we must wait that data
-    const data = await getJSON(`${API_URL}${id}`);
+    const data = await AJAX(`${API_URL}${id}?key=${KEY}`);
+    state.recipe = createRecipeObject(data);
 
-    const { recipe } = data.data;
-    state.recipe = {
-      id: recipe.id,
-      title: recipe.title,
-      publisher: recipe.publisher,
-      sourceUrl: recipe.source_url,
-      image: recipe.image_url,
-      servings: recipe.servings,
-      coockingTime: recipe.cooking_time,
-      ingredients: recipe.ingredients,
-    };
     // what we will do is to now use the data that we store
     // in the bookmarks array and the state
     // to basically Mark any recipe that we load as bookmarked,
@@ -47,7 +56,7 @@ export const loadSearchResults = async function (query) {
   try {
     state.search.query = query;
     // if (!query) return;
-    const data = await getJSON(`${API_URL}?search=${query}`);
+    const data = await AJAX(`${API_URL}?search=${query}&key=${KEY}`);
 
     state.search.results = data.data.recipes.map(rec => {
       return {
@@ -55,6 +64,7 @@ export const loadSearchResults = async function (query) {
         title: rec.title,
         publisher: rec.publisher,
         image: rec.image_url,
+        ...(rec.key && { key: rec.key }),
       };
     });
     state.search.page = 1;
@@ -86,7 +96,6 @@ const persistBookmarks = function () {
     'bookmarks',
     JSON.stringify(state.bookmarks)
   );
-  console.log(setStorage);
 };
 
 export const addBookmark = function (recipe) {
@@ -109,8 +118,41 @@ export const deletebookmark = function (id) {
 
 const init = function () {
   const storage = localStorage.getItem('bookmarks');
-  console.log(storage);
   if (storage) state.bookmarks = JSON.parse(storage);
 };
 init();
-console.log('model', state.bookmarks);
+
+export const uploadRecipe = async function (newRecipe) {
+  try {
+    const ingredients = Object.entries(newRecipe)
+      .filter(entry => entry[0].startsWith('ingredient') && entry[1] !== '')
+      .map(ing => {
+        // const ingArray = ing[1].replaceAll(' ', '').split(',');
+        const ingArray = ing[1].split(',').map(el => el.trim());
+        if (ingArray.length !== 3)
+          throw new Error(
+            `Wrong recipe format, please write the correct format`
+          );
+        const [quantity, unit, description] = ingArray;
+        return { quantity: quantity ? +quantity : null, unit, description };
+      });
+
+    const recipe = {
+      title: newRecipe.title,
+      publisher: newRecipe.publisher,
+      source_url: newRecipe.sourceUrl,
+      image_url: newRecipe.image,
+      cooking_time: +newRecipe.cookingTime,
+      servings: Number(newRecipe.servings),
+      ingredients,
+    };
+    // this will actually send the recipe
+    // then back to us. And so let's store that as data and also await it.
+    const data = await AJAX(`${API_URL}?key=${KEY}`, recipe);
+    state.recipe = createRecipeObject(data);
+    addBookmark(state.recipe);
+    console.log(state.recipe);
+  } catch (err) {
+    throw err;
+  }
+};
