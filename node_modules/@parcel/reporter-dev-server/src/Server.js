@@ -29,8 +29,7 @@ import ejs from 'ejs';
 import connect from 'connect';
 import serveHandler from 'serve-handler';
 import {createProxyMiddleware} from 'http-proxy-middleware';
-import {URL, URLSearchParams} from 'url';
-import launchEditor from 'launch-editor';
+import {URL} from 'url';
 import fresh from 'fresh';
 
 export function setHeaders(res: Response) {
@@ -49,7 +48,6 @@ export function setHeaders(res: Response) {
 const SLASH_REGEX = /\//g;
 
 export const SOURCES_ENDPOINT = '/__parcel_source_root';
-const EDITOR_ENDPOINT = '/__parcel_launch_editor';
 const TEMPLATE_404 = fs.readFileSync(
   path.join(__dirname, 'templates/404.html'),
   'utf8',
@@ -137,23 +135,12 @@ export default class Server {
 
   respond(req: Request, res: Response): mixed {
     if (this.middleware.some(handler => handler(req, res))) return;
-    let {pathname, search} = url.parse(req.originalUrl || req.url);
+    let {pathname} = url.parse(req.originalUrl || req.url);
     if (pathname == null) {
       pathname = '/';
     }
 
-    if (pathname.startsWith(EDITOR_ENDPOINT) && search) {
-      let query = new URLSearchParams(search);
-      let file = query.get('file');
-      if (file) {
-        // File location might start with /__parcel_source_root if it came from a source map.
-        if (file.startsWith(SOURCES_ENDPOINT)) {
-          file = file.slice(SOURCES_ENDPOINT.length + 1);
-        }
-        launchEditor(file);
-      }
-      res.end();
-    } else if (this.errors) {
+    if (this.errors) {
       return this.send500(req, res);
     } else if (path.extname(pathname) === '') {
       // If the URL doesn't start with the public path, or the URL doesn't
@@ -419,6 +406,9 @@ export default class Server {
       this.options.inputFS,
       fileInRoot,
       [
+        '.proxyrc.cts',
+        '.proxyrc.mts',
+        '.proxyrc.ts',
         '.proxyrc.cjs',
         '.proxyrc.mjs',
         '.proxyrc.js',
@@ -434,13 +424,24 @@ export default class Server {
 
     const filename = path.basename(configFilePath);
 
-    if (
-      filename === '.proxyrc.js' ||
-      filename === '.proxyrc.cjs' ||
-      filename === '.proxyrc.mjs'
-    ) {
-      // $FlowFixMe
-      // let cfg = (await import(configFilePath)).default;
+    if (filename === '.proxyrc' || filename === '.proxyrc.json') {
+      let conf = await readConfig(this.options.inputFS, configFilePath);
+      if (!conf) {
+        return this;
+      }
+      let cfg = conf.config;
+      if (typeof cfg !== 'object') {
+        this.options.logger.warn({
+          message:
+            "Proxy table in '.proxyrc' should be of object type. Skipping...",
+        });
+        return this;
+      }
+      for (const [context, options] of Object.entries(cfg)) {
+        // each key is interpreted as context, and value as middleware options
+        app.use(createProxyMiddleware(context, options));
+      }
+    } else {
       let cfg = await this.options.packageManager.require(
         configFilePath,
         fileInRoot,
@@ -459,23 +460,6 @@ export default class Server {
         return this;
       }
       cfg(app);
-    } else if (filename === '.proxyrc' || filename === '.proxyrc.json') {
-      let conf = await readConfig(this.options.inputFS, configFilePath);
-      if (!conf) {
-        return this;
-      }
-      let cfg = conf.config;
-      if (typeof cfg !== 'object') {
-        this.options.logger.warn({
-          message:
-            "Proxy table in '.proxyrc' should be of object type. Skipping...",
-        });
-        return this;
-      }
-      for (const [context, options] of Object.entries(cfg)) {
-        // each key is interpreted as context, and value as middleware options
-        app.use(createProxyMiddleware(context, options));
-      }
     }
 
     return this;
@@ -496,8 +480,24 @@ export default class Server {
     const app = connect();
     app.use((req, res, next) => {
       setHeaders(res);
+      if (req.method === 'OPTIONS') {
+        res.statusCode = 200;
+        res.end();
+        return;
+      }
       next();
     });
+
+    app.use((req, res, next) => {
+      if (req.url === '/__parcel_healthcheck') {
+        res.statusCode = 200;
+        res.write(`${Date.now()}`);
+        res.end();
+      } else {
+        next();
+      }
+    });
+
     await this.applyProxyTable(app);
     app.use(finalHandler);
 
