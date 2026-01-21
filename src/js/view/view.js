@@ -1,4 +1,4 @@
-import icons from '../../img/icons.svg';
+import icons from 'url:../../img/icons.svg';
 
 export default class view {
   _data;
@@ -8,6 +8,7 @@ export default class view {
   render(data, render = true) {
     this._data = data;
     this._curPage = this._data.page;
+    // if there is no data or if the data is an empty array
     if (!data || (Array.isArray(data) && data.length === 0))
       return this.renderError();
 
@@ -83,7 +84,7 @@ export default class view {
       // Updates changed ATTRIBUES
       if (!newEl.isEqualNode(curEl))
         Array.from(newEl.attributes).forEach(attr =>
-          curEl.setAttribute(attr.name, attr.value)
+          curEl.setAttribute(attr.name, attr.value),
         );
     });
   }
@@ -98,7 +99,7 @@ export default class view {
               <svg>
                 <use href="${icons}#icon-loader"></use>
               </svg>
-            </div>
+      </div>
       `;
     this._clearInput();
     this._parentElement.insertAdjacentHTML('afterbegin', markUp);

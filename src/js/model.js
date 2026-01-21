@@ -55,9 +55,9 @@ export const loadRecipe = async function (id) {
 export const loadSearchResults = async function (query) {
   try {
     state.search.query = query;
-    // if (!query) return;
+    if (!query) return;
+    // this is reading all the recipes from the API
     const data = await AJAX(`${API_URL}?search=${query}&key=${KEY}`);
-
     state.search.results = data.data.recipes.map(rec => {
       return {
         id: rec.id,
@@ -94,7 +94,7 @@ export const updateServings = function (newServings) {
 const persistBookmarks = function () {
   const setStorage = localStorage.setItem(
     'bookmarks',
-    JSON.stringify(state.bookmarks)
+    JSON.stringify(state.bookmarks),
   );
 };
 
@@ -131,7 +131,7 @@ export const uploadRecipe = async function (newRecipe) {
         const ingArray = ing[1].split(',').map(el => el.trim());
         if (ingArray.length !== 3)
           throw new Error(
-            `Wrong recipe format, please write the correct format`
+            `Wrong recipe format, please write the correct format`,
           );
         const [quantity, unit, description] = ingArray;
         return { quantity: quantity ? +quantity : null, unit, description };

@@ -35,7 +35,7 @@ const controlRecipes = async function () {
     resultView.update(model.getSearchResultPage());
     BookmarksView.update(model.state.bookmarks);
 
-    // 1- loading recipe / returns a promise so we have to await it
+    // 1- loading recipe
     await model.loadRecipe(id);
 
     // 2- render Recipe
@@ -49,9 +49,7 @@ const controlRecipes = async function () {
 const controlSearchResults = async function () {
   try {
     //  1) get search query
-
     const query = SearchView.getQuery();
-
     // 2) load search results
     if (!query) return;
     resultView.spinnerRender();

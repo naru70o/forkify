@@ -9,7 +9,10 @@ class ResultView extends view {
 
   _generateMarkup() {
     return this._data
-      .map(bookmark => PreviewView.render(bookmark, false))
+      .map(bookmark => {
+        console.log(bookmark);
+        return PreviewView.render(bookmark, false);
+      })
       .join('');
   }
 }
