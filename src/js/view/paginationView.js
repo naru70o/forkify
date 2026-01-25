@@ -1,4 +1,4 @@
-import icons from '../../img/icons.svg';
+import icons from 'url:../../img/icons.svg';
 import view from './view';
 
 class PaginationView extends view {
@@ -29,9 +29,9 @@ class PaginationView extends view {
     return `<button data-goTo="${
       this._curPage + 1
     }" class="btn--inline pagination__btn--next">
-    <span>Page ${this._curPage + 1}</span>
+    <span>Page ${this._curPage}/${Math.ceil(this._data.results.length / this._data.resultsPerPage)}</span>
     <svg class="search__icon">
-      <use href="${icons}.svg#icon-arrow-right"></use>
+      <use href="${icons}#icon-arrow-right"></use>
     </svg>
 </button> `;
   }
@@ -40,7 +40,7 @@ class PaginationView extends view {
     // const this._curPage = this._data.page;
 
     const numPages = Math.ceil(
-      this._data.results.length / this._data.resultsPerPage
+      this._data.results.length / this._data.resultsPerPage,
     );
 
     // 1) page 1, and there are other pages

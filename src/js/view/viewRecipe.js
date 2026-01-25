@@ -95,7 +95,6 @@ class RecipeView extends view {
           <h2 class="heading--2">Recipe ingredients</h2>
           <ul class="recipe__ingredient-list">
           ${this._data.ingredients.map(this.generateMarkupIngredient).join('')}
-            <h1>Test</h1>
             </div>
 
         <div class="recipe__directions">
